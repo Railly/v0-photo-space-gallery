@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { Download, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Download, X, ChevronLeft, ChevronRight, Heart } from "lucide-react"
 import { useGalleryStore } from "@/lib/gallery-store"
 import type { Photo } from "@/lib/photos"
 
@@ -10,8 +10,9 @@ interface GridViewProps {
 }
 
 export default function GridView({ onDownload }: GridViewProps) {
-  const { photos, visibleCount } = useGalleryStore()
-  const visible = photos.slice(0, visibleCount)
+  const { photos, visibleCount, favorites, showFavoritesOnly, toggleFavorite } = useGalleryStore()
+  const allVisible = photos.slice(0, visibleCount)
+  const visible = showFavoritesOnly ? allVisible.filter((p) => favorites.has(p.id)) : allVisible
 
   const [lightbox, setLightbox] = useState<Photo | null>(null)
   const [lightboxIndex, setLightboxIndex] = useState(0)
@@ -53,6 +54,13 @@ export default function GridView({ onDownload }: GridViewProps) {
       />
 
       <div className="relative z-10 columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-3 [column-fill:balance]">
+        {visible.length === 0 && showFavoritesOnly && (
+          <div className="col-span-full flex flex-col items-center justify-center py-24 gap-3 text-center">
+            <Heart className="w-8 h-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">No favorites yet.</p>
+            <p className="text-xs text-muted-foreground/60">Click the heart on any photo to save it here.</p>
+          </div>
+        )}
         {visible.map((photo) => (
           <div
             key={photo.id}
@@ -86,6 +94,22 @@ export default function GridView({ onDownload }: GridViewProps) {
             >
               <Download className="w-3 h-3" />
             </button>
+            {/* Favorite button */}
+            <button
+              className={`absolute top-2 left-2 w-7 h-7 rounded-full bg-background/70 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-background ${
+                favorites.has(photo.id)
+                  ? "opacity-100 text-rose-400"
+                  : "opacity-0 group-hover:opacity-100 text-foreground"
+              }`}
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleFavorite(photo.id)
+              }}
+              aria-label={favorites.has(photo.id) ? `Unfavorite ${photo.title}` : `Favorite ${photo.title}`}
+              aria-pressed={favorites.has(photo.id)}
+            >
+              <Heart className={`w-3 h-3 ${favorites.has(photo.id) ? "fill-rose-400" : ""}`} />
+            </button>
           </div>
         ))}
       </div>
@@ -104,6 +128,18 @@ export default function GridView({ onDownload }: GridViewProps) {
               <p className="text-xs text-muted-foreground">{lightbox.description}</p>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${
+                  favorites.has(lightbox.id)
+                    ? "bg-rose-500/20 text-rose-400 hover:bg-rose-500/30"
+                    : "bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => toggleFavorite(lightbox.id)}
+                aria-label={favorites.has(lightbox.id) ? "Unfavorite" : "Favorite"}
+                aria-pressed={favorites.has(lightbox.id)}
+              >
+                <Heart className={`w-4 h-4 ${favorites.has(lightbox.id) ? "fill-rose-400" : ""}`} />
+              </button>
               <button
                 className="w-9 h-9 flex items-center justify-center rounded-full bg-secondary/80 hover:bg-secondary transition-colors"
                 onClick={() => onDownload(lightbox)}

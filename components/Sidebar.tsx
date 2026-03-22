@@ -10,6 +10,7 @@ import {
   Minus,
   RotateCcw,
   ChevronLeft,
+  Heart,
 } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
@@ -32,8 +33,7 @@ import {
   useGalleryStore,
   createPhotoFromFile,
   type ViewMode,
-} from "@/lib/gallery-store"
-import { PHOTOS } from "@/lib/photos"
+} from "@/lib/gallery-store"import { PHOTOS } from "@/lib/photos"
 
 function SidebarContentInner() {
   const {
@@ -47,6 +47,10 @@ function SidebarContentInner() {
     setView,
     updateSettings,
     setPhotos,
+    favorites,
+    showFavoritesOnly,
+    toggleFavorite,
+    setShowFavoritesOnly,
   } = useGalleryStore()
 
   const { state } = useSidebar()
@@ -226,9 +230,25 @@ function SidebarContentInner() {
               Reset to defaults
             </Button>
 
+            {/* Favorites only toggle */}
+            <button
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                showFavoritesOnly
+                  ? "bg-rose-500/15 text-rose-400 hover:bg-rose-500/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
+              }`}
+              aria-pressed={showFavoritesOnly}
+            >
+              <Heart className={`w-3 h-3 flex-shrink-0 ${showFavoritesOnly ? "fill-rose-400" : ""}`} />
+              {showFavoritesOnly ? `Favorites (${favorites.size})` : `Show favorites only`}
+            </button>
+
             {/* Photo thumbnails list */}
             <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto sidebar-scroll pr-0.5">
-              {photos.map((photo) => (
+              {photos
+                .filter((p) => !showFavoritesOnly || favorites.has(p.id))
+                .map((photo) => (
                 <div
                   key={photo.id}
                   className="group flex items-center gap-2 rounded-md p-1 hover:bg-sidebar-accent transition-colors"
@@ -243,6 +263,18 @@ function SidebarContentInner() {
                   </div>
                   <span className="flex-1 text-[11px] text-foreground truncate">{photo.title}</span>
                   <button
+                    className={`transition-all text-muted-foreground hover:text-rose-400 ${
+                      favorites.has(photo.id)
+                        ? "opacity-100 text-rose-400"
+                        : "opacity-0 group-hover:opacity-100"
+                    }`}
+                    onClick={() => toggleFavorite(photo.id)}
+                    aria-label={favorites.has(photo.id) ? `Unfavorite ${photo.title}` : `Favorite ${photo.title}`}
+                    aria-pressed={favorites.has(photo.id)}
+                  >
+                    <Heart className={`w-3 h-3 ${favorites.has(photo.id) ? "fill-rose-400" : ""}`} />
+                  </button>
+                  <button
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                     onClick={() => removePhoto(photo.id)}
                     aria-label={`Remove ${photo.title}`}
@@ -251,6 +283,11 @@ function SidebarContentInner() {
                   </button>
                 </div>
               ))}
+              {showFavoritesOnly && favorites.size === 0 && (
+                <p className="text-[11px] text-muted-foreground text-center py-3">
+                  No favorites yet. Click the heart icon on any photo.
+                </p>
+              )}
             </div>
           </SidebarGroupContent>
         </SidebarGroup>

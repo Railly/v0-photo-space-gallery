@@ -19,6 +19,8 @@ interface GalleryState {
   visibleCount: number
   view: ViewMode
   settings: SceneSettings
+  favorites: Set<number>
+  showFavoritesOnly: boolean
   setPhotos: (photos: Photo[]) => void
   addPhotos: (photos: Photo[]) => void
   removePhoto: (id: number) => void
@@ -26,6 +28,8 @@ interface GalleryState {
   setVisibleCount: (n: number) => void
   setView: (v: ViewMode) => void
   updateSettings: (patch: Partial<SceneSettings>) => void
+  toggleFavorite: (id: number) => void
+  setShowFavoritesOnly: (v: boolean) => void
 }
 
 const DEFAULT_SETTINGS: SceneSettings = {
@@ -46,6 +50,8 @@ export const useGalleryStore = create<GalleryState>((set) => ({
   visibleCount: PHOTOS.length,
   view: "3d",
   settings: DEFAULT_SETTINGS,
+  favorites: new Set<number>(),
+  showFavoritesOnly: false,
 
   setPhotos: (photos) => set({ photos, visibleCount: photos.length }),
 
@@ -72,6 +78,19 @@ export const useGalleryStore = create<GalleryState>((set) => ({
 
   updateSettings: (patch) =>
     set((state) => ({ settings: { ...state.settings, ...patch } })),
+
+  toggleFavorite: (id) =>
+    set((state) => {
+      const next = new Set(state.favorites)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return { favorites: next }
+    }),
+
+  setShowFavoritesOnly: (v) => set({ showFavoritesOnly: v }),
 }))
 
 export function createPhotoFromFile(file: File): Promise<Photo> {
