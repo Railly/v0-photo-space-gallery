@@ -95,7 +95,7 @@ function SidebarContentInner() {
       onClick={() => setView(mode)}
       className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-medium transition-all duration-150 ${
         view === mode
-          ? "bg-accent text-accent-foreground"
+          ? "bg-foreground text-background"
           : "text-muted-foreground hover:text-foreground"
       }`}
       aria-pressed={view === mode}
@@ -108,41 +108,41 @@ function SidebarContentInner() {
   if (isCollapsed) {
     return (
       <>
-        <SidebarHeader className="p-2">
+        <SidebarHeader className="p-4">
           <div className="flex items-center justify-center">
-            <span className="text-xs font-semibold text-foreground">PS</span>
+            <span className="text-sm font-bold text-foreground tracking-tight">PS</span>
           </div>
         </SidebarHeader>
-        <SidebarContent className="sidebar-scroll">
-          <SidebarGroup>
-            <div className="flex flex-col gap-1 p-1">
+        <SidebarContent className="sidebar-scroll px-2">
+          <SidebarGroup className="py-3">
+            <div className="flex flex-col gap-3">
               <button
                 onClick={() => setView("3d")}
-                className={`p-2 rounded flex items-center justify-center ${
-                  view === "3d" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
+                className={`p-3 rounded-lg flex items-center justify-center transition-colors ${
+                  view === "3d" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 }`}
                 title="3D Space"
               >
-                <Box className="w-4 h-4" />
+                <Box className="w-6 h-6" />
               </button>
               <button
                 onClick={() => setView("grid")}
-                className={`p-2 rounded flex items-center justify-center ${
-                  view === "grid" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
+                className={`p-3 rounded-lg flex items-center justify-center transition-colors ${
+                  view === "grid" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 }`}
                 title="Grid"
               >
-                <LayoutGrid className="w-4 h-4" />
+                <LayoutGrid className="w-6 h-6" />
               </button>
             </div>
           </SidebarGroup>
-          <SidebarGroup>
+          <SidebarGroup className="py-3">
             <button
-              className="p-2 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+              className="p-3 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors w-full"
               onClick={() => fileInputRef.current?.click()}
               title="Upload photos"
             >
-              <Upload className="w-4 h-4" />
+              <Upload className="w-6 h-6" />
             </button>
             <input
               ref={fileInputRef}
@@ -192,7 +192,7 @@ function SidebarContentInner() {
           <SidebarGroupContent className="flex flex-col gap-3">
             {/* Upload drop zone */}
             <div
-              className="border border-dashed border-sidebar-border rounded-md p-3 flex flex-col items-center gap-2 cursor-pointer hover:border-accent/60 hover:bg-accent/5 transition-all duration-150 text-center"
+              className="border border-dashed border-sidebar-border rounded-md p-3 flex flex-col items-center gap-2 cursor-pointer hover:border-foreground/40 hover:bg-secondary/30 transition-all duration-150 text-center"
               onClick={() => fileInputRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDropZone}
