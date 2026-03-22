@@ -63,14 +63,14 @@ function Scene({ onDownload }: SceneProps) {
 
   return (
     <>
-      <ambientLight intensity={0.65} />
-      <directionalLight position={[12, 18, 12]} intensity={1.1} castShadow />
-      <directionalLight position={[-12, -6, -12]} intensity={0.35} color="#3366ff" />
-      <pointLight position={[0, 0, 0]} intensity={1.0} color="#70c8e0" distance={28} decay={2} />
+      <ambientLight intensity={0.75} />
+      <directionalLight position={[12, 18, 12]} intensity={1.2} castShadow />
+      <directionalLight position={[-12, -6, -12]} intensity={0.4} color="#ffffff" />
+      <pointLight position={[0, 0, 0]} intensity={0.8} color="#ffffff" distance={28} decay={2} />
 
-      <Stars radius={110} depth={55} count={7000} factor={4.5} saturation={0.15} fade speed={0.3} />
+      <Stars radius={110} depth={55} count={5000} factor={3.5} saturation={0} fade speed={0.2} />
 
-      {settings.fog && <fog attach="fog" args={["#090b11", 38, 85]} />}
+      {settings.fog && <fog attach="fog" args={["#0a0a0a", 38, 85]} />}
 
       {visible.map((photo, i) => (
         <PhotoCard
@@ -107,7 +107,7 @@ export default function SpaceScene({
         toneMappingExposure: 1.15,
       }}
     >
-      <color attach="background" args={["#090b11"]} />
+      <color attach="background" args={["#0a0a0a"]} />
 
       <Suspense fallback={null}>
         <Scene onDownload={onDownload} />

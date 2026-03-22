@@ -47,7 +47,7 @@ export default function GridView({ onDownload }: GridViewProps) {
         className="pointer-events-none fixed inset-0 opacity-20"
         style={{
           backgroundImage:
-            "radial-gradient(circle, rgba(180,220,255,0.5) 1px, transparent 1px)",
+            "radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px)",
           backgroundSize: "36px 36px",
         }}
       />
@@ -56,7 +56,7 @@ export default function GridView({ onDownload }: GridViewProps) {
         {visible.map((photo) => (
           <div
             key={photo.id}
-            className="break-inside-avoid mb-3 group relative overflow-hidden rounded-lg ring-1 ring-border/50 hover:ring-accent/60 transition-all duration-200 cursor-pointer"
+            className="break-inside-avoid mb-3 group relative overflow-hidden rounded-lg ring-1 ring-border/50 hover:ring-foreground/60 transition-all duration-200 cursor-pointer"
             onClick={() => open(photo)}
             role="button"
             tabIndex={0}

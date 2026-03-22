@@ -39,6 +39,12 @@ export default function PhotoCard({
   texture.minFilter = THREE.LinearMipmapLinearFilter
   texture.magFilter = THREE.LinearFilter
 
+  // Clone texture for back face with horizontal flip
+  const backTexture = texture.clone()
+  backTexture.wrapS = THREE.RepeatWrapping
+  backTexture.repeat.x = -1
+  backTexture.offset.x = 1
+
   const imgAspect = photo.width / photo.height
   const frameW = cardWidth
   const frameH = cardWidth / imgAspect
@@ -93,16 +99,27 @@ export default function PhotoCard({
         document.body.style.cursor = "auto"
       }}
     >
+      {/* Back of polaroid card - white frame (visible when rotated) */}
+      <mesh position={[0, 0, -0.01]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[backW, backH]} />
+        <meshStandardMaterial color="#f5f5f5" roughness={0.75} metalness={0} />
+      </mesh>
+      {/* Back photo - same image but mirrored (positioned closer to viewer when seen from back) */}
+      <mesh position={[0, backH / 2 - frameH / 2 - CARD_PADDING, -0.013]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[frameW, frameH]} />
+        <meshStandardMaterial map={backTexture} roughness={0.35} metalness={0} toneMapped={false} />
+      </mesh>
+
       {/* Glow halo */}
       <mesh ref={glowRef} position={[0, 0, -0.005]}>
         <planeGeometry args={[backW + 0.3, backH + 0.3]} />
-        <meshBasicMaterial color="#48d8e8" transparent opacity={0} depthWrite={false} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {/* Polaroid backing */}
+      {/* Polaroid backing - front */}
       <mesh castShadow>
         <planeGeometry args={[backW, backH]} />
-        <meshStandardMaterial color="#f2ede6" roughness={0.75} metalness={0} />
+        <meshStandardMaterial color="#f5f5f5" roughness={0.75} metalness={0} />
       </mesh>
 
       {/* Photo image */}

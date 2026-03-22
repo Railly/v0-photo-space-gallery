@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react"
 import dynamic from "next/dynamic"
-import Sidebar from "@/components/Sidebar"
+import { SidebarWrapper } from "@/components/Sidebar"
 import MobileGallery from "@/components/MobileGallery"
 import Hud from "@/components/Hud"
 import GridView from "@/components/GridView"
@@ -12,7 +12,7 @@ import type { Photo } from "@/lib/photos"
 const SpaceScene = dynamic(() => import("@/components/SpaceScene"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-[#0a0c12] gap-4">
+    <div className="w-full h-full flex flex-col items-center justify-center bg-[#0a0a0a] gap-4">
       <div className="flex gap-1.5">
         {[0, 1, 2, 3, 4].map((i) => (
           <div
@@ -65,12 +65,8 @@ export default function PhotoSpaceClient() {
   }
 
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-background">
-      {/* Left sidebar */}
-      <Sidebar />
-
-      {/* Main content area */}
-      <div className="relative flex-1 overflow-hidden">
+    <SidebarWrapper>
+      <div className="relative flex-1 overflow-hidden h-screen">
         {view === "3d" ? (
           <>
             <SpaceScene onDownload={handleDownload} />
@@ -80,6 +76,6 @@ export default function PhotoSpaceClient() {
           <GridView onDownload={handleDownload} />
         )}
       </div>
-    </div>
+    </SidebarWrapper>
   )
 }
