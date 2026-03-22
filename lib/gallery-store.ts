@@ -29,12 +29,12 @@ interface GalleryState {
 }
 
 const DEFAULT_SETTINGS: SceneSettings = {
-  spread: 13,
-  verticalRange: 9,
-  cardScale: 1,
+  spread: 13.0,
+  verticalRange: 8.5,
+  cardScale: 1.65,
   floatSpeed: 0.55,
   floatAmount: 0.09,
-  tiltAmount: 0.3,
+  tiltAmount: 0.30,
   autoRotate: true,
   fog: true,
 }
@@ -43,7 +43,7 @@ let nextId = PHOTOS.length + 1
 
 export const useGalleryStore = create<GalleryState>((set) => ({
   photos: PHOTOS,
-  visibleCount: PHOTOS.length,
+  visibleCount: Math.min(12, PHOTOS.length),
   view: "3d",
   settings: DEFAULT_SETTINGS,
 

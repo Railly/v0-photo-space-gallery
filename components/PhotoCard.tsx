@@ -93,16 +93,26 @@ export default function PhotoCard({
         document.body.style.cursor = "auto"
       }}
     >
+      {/* Back photo card (visible when rotated) */}
+      <mesh position={[0, 0, -0.02]}>
+        <planeGeometry args={[backW, backH]} />
+        <meshStandardMaterial color="#1a1a1a" roughness={0.9} metalness={0} side={THREE.BackSide} />
+      </mesh>
+      <mesh position={[0, 0, -0.015]}>
+        <planeGeometry args={[backW * 0.85, backH * 0.6]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.8} metalness={0} side={THREE.BackSide} />
+      </mesh>
+
       {/* Glow halo */}
       <mesh ref={glowRef} position={[0, 0, -0.005]}>
         <planeGeometry args={[backW + 0.3, backH + 0.3]} />
         <meshBasicMaterial color="#48d8e8" transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {/* Polaroid backing */}
+      {/* Polaroid backing - front */}
       <mesh castShadow>
         <planeGeometry args={[backW, backH]} />
-        <meshStandardMaterial color="#f2ede6" roughness={0.75} metalness={0} />
+        <meshStandardMaterial color="#f5f5f5" roughness={0.75} metalness={0} />
       </mesh>
 
       {/* Photo image */}
