@@ -99,13 +99,13 @@ export default function PhotoCard({
         document.body.style.cursor = "auto"
       }}
     >
-      {/* Back of polaroid card - mirrored image (visible when rotated) */}
+      {/* Back of polaroid card - white frame (visible when rotated) */}
       <mesh position={[0, 0, -0.01]} rotation={[0, Math.PI, 0]}>
         <planeGeometry args={[backW, backH]} />
         <meshStandardMaterial color="#f5f5f5" roughness={0.75} metalness={0} />
       </mesh>
-      {/* Back photo - same image but mirrored */}
-      <mesh position={[0, backH / 2 - frameH / 2 - CARD_PADDING, -0.007]} rotation={[0, Math.PI, 0]}>
+      {/* Back photo - same image but mirrored (positioned closer to viewer when seen from back) */}
+      <mesh position={[0, backH / 2 - frameH / 2 - CARD_PADDING, -0.013]} rotation={[0, Math.PI, 0]}>
         <planeGeometry args={[frameW, frameH]} />
         <meshStandardMaterial map={backTexture} roughness={0.35} metalness={0} toneMapped={false} />
       </mesh>
