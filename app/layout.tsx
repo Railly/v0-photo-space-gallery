@@ -6,8 +6,8 @@ import './globals.css'
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
-  title: 'Agent Session #001 — YC W26',
-  description: 'A coding agent built a full-stack SaaS billing dashboard with Stripe, Supabase, and team management — in 4 minutes and 18 seconds.',
+  title: 'Agent Session #001 — YC Application',
+  description: 'A coding agent built a 3D photo gallery with React Three Fiber polaroid cards, a golden-angle layout algorithm, live scene controls, and a mobile fallback — in 4 minutes 31 seconds.',
   generator: 'v0.app',
   icons: {
     icon: [
