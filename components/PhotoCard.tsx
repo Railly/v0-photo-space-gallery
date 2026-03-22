@@ -93,20 +93,26 @@ export default function PhotoCard({
         document.body.style.cursor = "auto"
       }}
     >
-      {/* Back photo card (visible when rotated) */}
-      <mesh position={[0, 0, -0.02]}>
+      {/* Back of polaroid card (visible when rotated) */}
+      <mesh position={[0, 0, -0.01]} rotation={[0, Math.PI, 0]}>
         <planeGeometry args={[backW, backH]} />
-        <meshStandardMaterial color="#1a1a1a" roughness={0.9} metalness={0} side={THREE.BackSide} />
+        <meshStandardMaterial color="#e8e4dc" roughness={0.85} metalness={0} />
       </mesh>
-      <mesh position={[0, 0, -0.015]}>
-        <planeGeometry args={[backW * 0.85, backH * 0.6]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.8} metalness={0} side={THREE.BackSide} />
+      {/* Back texture - darker center area simulating photo backing */}
+      <mesh position={[0, backH / 2 - frameH / 2 - CARD_PADDING, -0.008]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[frameW, frameH]} />
+        <meshStandardMaterial color="#2a2a2a" roughness={0.95} metalness={0} />
+      </mesh>
+      {/* Back label area */}
+      <mesh position={[0, -(backH / 2 - 0.08), -0.008]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[backW * 0.7, 0.12]} />
+        <meshStandardMaterial color="#d4d0c8" roughness={0.9} metalness={0} />
       </mesh>
 
       {/* Glow halo */}
       <mesh ref={glowRef} position={[0, 0, -0.005]}>
         <planeGeometry args={[backW + 0.3, backH + 0.3]} />
-        <meshBasicMaterial color="#48d8e8" transparent opacity={0} depthWrite={false} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0} depthWrite={false} />
       </mesh>
 
       {/* Polaroid backing - front */}

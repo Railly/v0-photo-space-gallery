@@ -48,7 +48,7 @@ export default function Hud({ onReset, lastDownloaded }: HudProps) {
         </button>
       </div>
 
-      <div className="absolute bottom-6 left-[calc(15rem+1.25rem)] z-10 select-none pointer-events-none">
+      <div className="absolute bottom-6 left-6 z-10 select-none pointer-events-none">
         <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/70">
           <span className="w-1 h-1 rounded-full bg-accent/70 animate-pulse" />
           <span>{visibleCount} photo{visibleCount !== 1 ? "s" : ""} floating in space</span>
