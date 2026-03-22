@@ -2,15 +2,17 @@
 
 import { useState, useCallback, useEffect } from "react"
 import dynamic from "next/dynamic"
+import Sidebar from "@/components/Sidebar"
 import MobileGallery from "@/components/MobileGallery"
 import Hud from "@/components/Hud"
-import { PHOTOS, type Photo } from "@/lib/photos"
+import GridView from "@/components/GridView"
+import { useGalleryStore } from "@/lib/gallery-store"
+import type { Photo } from "@/lib/photos"
 
-// Dynamic import so Three.js doesn't SSR
 const SpaceScene = dynamic(() => import("@/components/SpaceScene"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-screen flex flex-col items-center justify-center bg-[#0a0c12] gap-4">
+    <div className="w-full h-full flex flex-col items-center justify-center bg-[#0a0c12] gap-4">
       <div className="flex gap-1.5">
         {[0, 1, 2, 3, 4].map((i) => (
           <div
@@ -39,6 +41,7 @@ function downloadPhoto(photo: Photo) {
 export default function PhotoSpaceClient() {
   const [isMobile, setIsMobile] = useState(false)
   const [lastDownloaded, setLastDownloaded] = useState<Photo | null>(null)
+  const view = useGalleryStore((s) => s.view)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -52,6 +55,7 @@ export default function PhotoSpaceClient() {
     setLastDownloaded(photo)
   }, [])
 
+  // Mobile: no sidebar, just masonry gallery
   if (isMobile) {
     return (
       <div className="w-full min-h-screen bg-background overflow-x-hidden">
@@ -61,9 +65,21 @@ export default function PhotoSpaceClient() {
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      <SpaceScene onDownload={handleDownload} />
-      <Hud lastDownloaded={lastDownloaded} />
+    <div className="flex w-full h-screen overflow-hidden bg-background">
+      {/* Left sidebar */}
+      <Sidebar />
+
+      {/* Main content area */}
+      <div className="relative flex-1 overflow-hidden">
+        {view === "3d" ? (
+          <>
+            <SpaceScene onDownload={handleDownload} />
+            <Hud lastDownloaded={lastDownloaded} />
+          </>
+        ) : (
+          <GridView onDownload={handleDownload} />
+        )}
+      </div>
     </div>
   )
 }

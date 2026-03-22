@@ -1,37 +1,40 @@
 // @ts-nocheck
 "use client"
 
-import { useRef, useMemo, Suspense } from "react"
+import { useMemo, Suspense } from "react"
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, Stars } from "@react-three/drei"
 import * as THREE from "three"
-import { PHOTOS, type Photo } from "@/lib/photos"
+import { useGalleryStore } from "@/lib/gallery-store"
+import type { Photo } from "@/lib/photos"
 import PhotoCard from "@/components/PhotoCard"
 
-// Distribute cards in a loose spherical cloud, all facing roughly inward
-function generateCardLayout(count: number) {
+function generateCardLayout(
+  count: number,
+  spread: number,
+  verticalRange: number,
+  tiltAmount: number
+) {
   const positions: [number, number, number][] = []
   const rotations: [number, number, number][] = []
-
   const goldenAngle = Math.PI * (3 - Math.sqrt(5))
 
   for (let i = 0; i < count; i++) {
-    const t = i / (count - 1)
+    const t = count > 1 ? i / (count - 1) : 0.5
     const y = 1 - t * 2
     const rxy = Math.sqrt(Math.max(0, 1 - y * y))
     const theta = goldenAngle * i
+    const jitter = (((i * 7919) % 100) / 100 - 0.5)
 
-    const spread = 13 + (i % 3) * 2.5
-    const px = Math.cos(theta) * rxy * spread
-    const py = y * 9 + (((i * 7919) % 100) / 100 - 0.5) * 5
-    const pz = Math.sin(theta) * rxy * spread
+    const px = Math.cos(theta) * rxy * (spread + (i % 3) * 2.5)
+    const py = y * verticalRange + jitter * 5
+    const pz = Math.sin(theta) * rxy * (spread + (i % 3) * 2.5)
 
     positions.push([px, py, pz])
 
-    // Face toward origin + slight random tilt
     const yaw = Math.atan2(px, pz)
     const pitch = -Math.atan2(py, Math.sqrt(px * px + pz * pz)) * 0.4
-    const roll = (((i * 2311) % 100) / 100 - 0.5) * 0.3
+    const roll = (((i * 2311) % 100) / 100 - 0.5) * tiltAmount
 
     rotations.push([pitch, yaw, roll])
   }
@@ -44,7 +47,19 @@ interface SceneProps {
 }
 
 function Scene({ onDownload }: SceneProps) {
-  const { positions, rotations } = useMemo(() => generateCardLayout(PHOTOS.length), [])
+  const { photos, visibleCount, settings } = useGalleryStore()
+  const visible = photos.slice(0, visibleCount)
+
+  const { positions, rotations } = useMemo(
+    () =>
+      generateCardLayout(
+        visible.length,
+        settings.spread,
+        settings.verticalRange,
+        settings.tiltAmount
+      ),
+    [visible.length, settings.spread, settings.verticalRange, settings.tiltAmount]
+  )
 
   return (
     <>
@@ -53,24 +68,20 @@ function Scene({ onDownload }: SceneProps) {
       <directionalLight position={[-12, -6, -12]} intensity={0.35} color="#3366ff" />
       <pointLight position={[0, 0, 0]} intensity={1.0} color="#70c8e0" distance={28} decay={2} />
 
-      <Stars
-        radius={110}
-        depth={55}
-        count={7000}
-        factor={4.5}
-        saturation={0.15}
-        fade
-        speed={0.3}
-      />
+      <Stars radius={110} depth={55} count={7000} factor={4.5} saturation={0.15} fade speed={0.3} />
 
-      {PHOTOS.map((photo, i) => (
+      {settings.fog && <fog attach="fog" args={["#090b11", 38, 85]} />}
+
+      {visible.map((photo, i) => (
         <PhotoCard
           key={photo.id}
           photo={photo}
-          position={positions[i]}
-          rotation={rotations[i]}
-          cardWidth={2.3}
-          cardHeight={1.65}
+          position={positions[i] ?? [0, 0, 0]}
+          rotation={rotations[i] ?? [0, 0, 0]}
+          cardWidth={2.3 * settings.cardScale}
+          cardHeight={1.65 * settings.cardScale}
+          floatSpeed={settings.floatSpeed}
+          floatAmount={settings.floatAmount}
           onDownload={onDownload}
         />
       ))}
@@ -83,6 +94,8 @@ export default function SpaceScene({
 }: {
   onDownload: (photo: Photo) => void
 }) {
+  const { settings } = useGalleryStore()
+
   return (
     <Canvas
       shadows
@@ -95,7 +108,6 @@ export default function SpaceScene({
       }}
     >
       <color attach="background" args={["#090b11"]} />
-      <fog attach="fog" args={["#090b11", 38, 85]} />
 
       <Suspense fallback={null}>
         <Scene onDownload={onDownload} />
@@ -105,7 +117,7 @@ export default function SpaceScene({
         enablePan
         enableZoom
         enableRotate
-        autoRotate
+        autoRotate={settings.autoRotate}
         autoRotateSpeed={0.3}
         zoomSpeed={0.7}
         rotateSpeed={0.6}
