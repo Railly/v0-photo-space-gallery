@@ -6,8 +6,8 @@ import './globals.css'
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
-  title: 'Photo Space — 3D Gallery',
-  description: 'Your photos rendered as floating cards in a 3D space. Navigate with orbit controls, click to download.',
+  title: 'Agent Session #001 — YC W26',
+  description: 'A coding agent built a full-stack SaaS billing dashboard with Stripe, Supabase, and team management — in 4 minutes and 18 seconds.',
   generator: 'v0.app',
   icons: {
     icon: [

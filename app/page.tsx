@@ -1,5 +1,5 @@
-import PhotoSpaceClient from "@/components/PhotoSpaceClient"
+import AgentSessionShowcase from "@/components/AgentSessionShowcase"
 
 export default function Page() {
-  return <PhotoSpaceClient />
+  return <AgentSessionShowcase />
 }
