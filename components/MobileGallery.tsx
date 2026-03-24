@@ -241,12 +241,15 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     }
   }, [updateScrollIndicators, handleThumbScroll, lightbox])
 
-  // Scroll to active thumbnail when lightbox opens or index changes externally
+  // Scroll to active thumbnail only when lightbox first opens
+  const prevLightboxRef = useRef<Photo | null>(null)
   useEffect(() => {
-    if (lightbox && !isThumbScrolling) {
-      scrollToThumbIndex(lightboxIndex)
+    // Only scroll when lightbox opens (not during thumb scrolling changes)
+    if (lightbox && prevLightboxRef.current === null) {
+      scrollToThumbIndex(lightboxIndex, false)
     }
-  }, [lightboxIndex, lightbox, isThumbScrolling, scrollToThumbIndex])
+    prevLightboxRef.current = lightbox
+  }, [lightbox, lightboxIndex, scrollToThumbIndex])
 
 
 
@@ -476,9 +479,15 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
 
           {/* Snap-to-center thumbnail carousel */}
           <div className="relative safe-area-bottom pb-4">
-            {/* Center reticle indicator */}
-            <div className="absolute left-1/2 top-0 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center">
-              <div className="w-0.5 h-2 bg-foreground/60 rounded-full" />
+            {/* Center selection frame - persistent square reticle */}
+            <div 
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
+              style={{ marginTop: "10px" }}
+            >
+              <div 
+                className="w-16 h-16 rounded-xl border-2 border-foreground/80 bg-transparent"
+                style={{ boxShadow: "0 0 0 4px rgba(0,0,0,0.5)" }}
+              />
             </div>
             
             {/* Left fade gradient */}
@@ -509,37 +518,24 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
                 paddingRight: `calc(50% - ${THUMB_SIZE / 2}px)`,
               }}
             >
-              {visible.map((photo, i) => {
-                const isActive = i === lightboxIndex
-                return (
-                  <div
-                    key={photo.id}
-                    className="flex-shrink-0 snap-center"
-                  >
-                    <div 
-                      className={`w-14 h-14 rounded-lg overflow-hidden transition-all duration-200 ${
-                        isActive 
-                          ? "ring-2 ring-foreground scale-110 shadow-lg" 
-                          : "ring-1 ring-border/30 opacity-50 scale-95"
-                      }`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={photo.thumb}
-                        alt=""
-                        className="w-full h-full object-cover"
-                        draggable={false}
-                      />
-                    </div>
+              {visible.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="flex-shrink-0 snap-center"
+                >
+                  <div className="w-14 h-14 rounded-lg overflow-hidden ring-1 ring-border/20">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photo.thumb}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      draggable={false}
+                    />
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
             
-            {/* Bottom reticle */}
-            <div className="absolute left-1/2 bottom-4 -translate-x-1/2 z-20 pointer-events-none">
-              <div className="w-0.5 h-2 bg-foreground/60 rounded-full" />
-            </div>
           </div>
         </div>
       )}
