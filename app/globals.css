@@ -90,16 +90,27 @@
   }
 }
 
-/* Masonry mobile layout */
+/* Masonry grid layout */
 .masonry-grid {
-  display: columns;
   column-count: 2;
   column-gap: 0.75rem;
 }
 
-@media (min-width: 480px) {
+@media (min-width: 640px) {
   .masonry-grid {
     column-count: 3;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-grid {
+    column-count: 4;
+  }
+}
+
+@media (min-width: 1280px) {
+  .masonry-grid {
+    column-count: 5;
   }
 }
 
