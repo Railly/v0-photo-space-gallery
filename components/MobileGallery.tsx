@@ -34,6 +34,11 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
   const [thumbDragStart, setThumbDragStart] = useState<number | null>(null)
   const [thumbScrollStart, setThumbScrollStart] = useState(0)
   const activeThumbRef = useRef<HTMLButtonElement>(null)
+  
+  // Main gallery vertical scroll state
+  const galleryScrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollUp, setCanScrollUp] = useState(false)
+  const [canScrollDown, setCanScrollDown] = useState(true)
 
   const openLightbox = useCallback((photo: Photo) => {
     const idx = visible.findIndex((p) => p.id === photo.id)
@@ -133,6 +138,29 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     setCanScrollLeft(scrollLeft > 5)
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5)
   }, [])
+
+  // Main gallery vertical scroll detection
+  const updateGalleryScrollIndicators = useCallback(() => {
+    const container = galleryScrollRef.current
+    if (!container) return
+    
+    const { scrollTop, scrollHeight, clientHeight } = container
+    setCanScrollUp(scrollTop > 10)
+    setCanScrollDown(scrollTop < scrollHeight - clientHeight - 10)
+  }, [])
+
+  useEffect(() => {
+    const container = galleryScrollRef.current
+    if (!container) return
+    
+    updateGalleryScrollIndicators()
+    container.addEventListener("scroll", updateGalleryScrollIndicators)
+    window.addEventListener("resize", updateGalleryScrollIndicators)
+    return () => {
+      container.removeEventListener("scroll", updateGalleryScrollIndicators)
+      window.removeEventListener("resize", updateGalleryScrollIndicators)
+    }
+  }, [updateGalleryScrollIndicators])
 
   useEffect(() => {
     const container = thumbContainerRef.current
@@ -242,7 +270,8 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
 
       {/* Gallery grid */}
       <div
-        className="min-h-screen overflow-y-auto gallery-scroll px-3 pb-10 pt-24"
+        ref={galleryScrollRef}
+        className="min-h-screen h-screen overflow-y-auto gallery-scroll px-3 pb-10 pt-24"
         style={{ background: "var(--background)" }}
       >
         <div
@@ -252,6 +281,21 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
             backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)",
             backgroundSize: "32px 32px",
           }}
+        />
+        
+        {/* Top fade gradient - visible when content scrolled down */}
+        <div
+          aria-hidden
+          className={`pointer-events-none fixed top-20 left-0 right-0 h-12 bg-gradient-to-b from-background to-transparent z-10 transition-opacity duration-200 ${
+            canScrollUp ? "opacity-100" : "opacity-0"
+          }`}
+        />
+        {/* Bottom fade gradient - visible when more content below */}
+        <div
+          aria-hidden
+          className={`pointer-events-none fixed bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent z-10 transition-opacity duration-200 ${
+            canScrollDown ? "opacity-100" : "opacity-0"
+          }`}
         />
         <div className="flex gap-3 relative z-10">
           <div className="flex-1 flex flex-col gap-3">
