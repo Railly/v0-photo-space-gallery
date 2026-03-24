@@ -32,7 +32,6 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
   const thumbContainerRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const scrollEndTimer = useRef<NodeJS.Timeout | null>(null)
   const THUMB_SIZE = 56
   const THUMB_GAP = 8
   
@@ -130,7 +129,7 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     setLongPressTarget(null)
   }, [])
 
-  // Simple scroll indicator update
+  // Update scroll indicators (for fade gradients)
   const updateScrollIndicators = useCallback(() => {
     const container = thumbContainerRef.current
     if (!container) return
@@ -138,15 +137,6 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     setCanScrollLeft(scrollLeft > 5)
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5)
   }, [])
-
-  // Get index of thumbnail at center
-  const getCenteredIndex = useCallback(() => {
-    const container = thumbContainerRef.current
-    if (!container) return lightboxIndex
-    const scrollPos = container.scrollLeft
-    const idx = Math.round(scrollPos / (THUMB_SIZE + THUMB_GAP))
-    return Math.max(0, Math.min(visible.length - 1, idx))
-  }, [visible.length, lightboxIndex, THUMB_SIZE, THUMB_GAP])
 
   // Scroll to index
   const scrollToIndex = useCallback((idx: number, smooth = true) => {
@@ -156,34 +146,30 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     container.scrollTo({ left: targetScroll, behavior: smooth ? "smooth" : "auto" })
   }, [THUMB_SIZE, THUMB_GAP])
 
-  // Handle scroll end - only update image when scroll stops
-  const handleScrollEnd = useCallback(() => {
-    const idx = getCenteredIndex()
+  // Handle touch end / mouse up - snap and select
+  const handleCarouselRelease = useCallback(() => {
+    const container = thumbContainerRef.current
+    if (!container) return
     
-    // Snap to nearest
-    scrollToIndex(idx, true)
+    // Calculate centered index
+    const scrollPos = container.scrollLeft
+    const idx = Math.round(scrollPos / (THUMB_SIZE + THUMB_GAP))
+    const clampedIdx = Math.max(0, Math.min(visible.length - 1, idx))
+    
+    // Snap to position
+    scrollToIndex(clampedIdx, true)
     
     // Update image only if different
-    if (idx !== lightboxIndex && visible[idx]) {
-      const dir = idx > lightboxIndex ? "left" : "right"
+    if (clampedIdx !== lightboxIndex && visible[clampedIdx]) {
+      const dir = clampedIdx > lightboxIndex ? "left" : "right"
       setDirection(dir)
-      setLightboxIndex(idx)
-      setLightbox(visible[idx])
+      setLightboxIndex(clampedIdx)
+      setLightbox(visible[clampedIdx])
       setTimeout(() => setDirection(null), 150)
     }
-  }, [getCenteredIndex, scrollToIndex, lightboxIndex, visible])
-
-  // Scroll handler - debounce to detect scroll end
-  const handleThumbScroll = useCallback(() => {
+    
     updateScrollIndicators()
-    
-    if (scrollEndTimer.current) {
-      clearTimeout(scrollEndTimer.current)
-    }
-    
-    // Wait for scroll to stop, then snap and update
-    scrollEndTimer.current = setTimeout(handleScrollEnd, 120)
-  }, [updateScrollIndicators, handleScrollEnd])
+  }, [visible, lightboxIndex, scrollToIndex, updateScrollIndicators, THUMB_SIZE, THUMB_GAP])
 
   // Main gallery vertical scroll detection
   const updateGalleryScrollIndicators = useCallback(() => {
@@ -213,14 +199,18 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     if (!container) return
     
     updateScrollIndicators()
-    container.addEventListener("scroll", handleThumbScroll)
+    
+    // Only act on release (touchend/mouseup)
+    container.addEventListener("touchend", handleCarouselRelease)
+    container.addEventListener("mouseup", handleCarouselRelease)
+    container.addEventListener("scroll", updateScrollIndicators)
+    
     return () => {
-      container.removeEventListener("scroll", handleThumbScroll)
-      if (scrollEndTimer.current) {
-        clearTimeout(scrollEndTimer.current)
-      }
+      container.removeEventListener("touchend", handleCarouselRelease)
+      container.removeEventListener("mouseup", handleCarouselRelease)
+      container.removeEventListener("scroll", updateScrollIndicators)
     }
-  }, [updateScrollIndicators, handleThumbScroll, lightbox])
+  }, [updateScrollIndicators, handleCarouselRelease, lightbox])
 
   // Scroll to active thumbnail when lightbox opens
   const prevLightboxRef = useRef<Photo | null>(null)
