@@ -160,3 +160,17 @@
 .skeleton-shimmer {
   animation: shimmer 1.5s infinite;
 }
+
+/* Snap scroll for carousel */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+.snap-mandatory {
+  scroll-snap-type: x mandatory;
+}
+.snap-center {
+  scroll-snap-align: center;
+}
+.snap-start {
+  scroll-snap-align: start;
+}

@@ -28,13 +28,14 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
   const longPressTimer = useRef<NodeJS.Timeout | null>(null)
   const [longPressTarget, setLongPressTarget] = useState<Photo | null>(null)
   
-  // Thumbnail strip scroll state
+  // Snap-to-center carousel state
   const thumbContainerRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const [thumbDragStart, setThumbDragStart] = useState<number | null>(null)
-  const [thumbScrollStart, setThumbScrollStart] = useState(0)
-  const activeThumbRef = useRef<HTMLButtonElement>(null)
+  const [isThumbScrolling, setIsThumbScrolling] = useState(false)
+  const thumbScrollTimeout = useRef<NodeJS.Timeout | null>(null)
+  const THUMB_SIZE = 56 // w-14 = 56px
+  const THUMB_GAP = 8 // gap-2 = 8px
   
   // Main gallery vertical scroll state
   const galleryScrollRef = useRef<HTMLDivElement>(null)
@@ -130,7 +131,7 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     setLongPressTarget(null)
   }, [])
 
-  // Thumbnail strip scroll detection
+  // Thumbnail carousel scroll detection and snap-to-center logic
   const updateScrollIndicators = useCallback(() => {
     const container = thumbContainerRef.current
     if (!container) return
@@ -139,6 +140,69 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     setCanScrollLeft(scrollLeft > 5)
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5)
   }, [])
+
+  // Calculate which thumbnail is at center based on scroll position
+  const getCenteredIndex = useCallback(() => {
+    const container = thumbContainerRef.current
+    if (!container) return lightboxIndex
+    
+    const containerCenter = container.scrollLeft + container.clientWidth / 2
+    const firstThumbOffset = container.clientWidth / 2 - THUMB_SIZE / 2
+    const scrolledPastFirst = containerCenter - firstThumbOffset
+    const idx = Math.round(scrolledPastFirst / (THUMB_SIZE + THUMB_GAP))
+    return Math.max(0, Math.min(visible.length - 1, idx))
+  }, [visible.length, lightboxIndex, THUMB_SIZE, THUMB_GAP])
+
+  // Snap to the centered thumbnail when scrolling stops
+  const snapToCenter = useCallback(() => {
+    const container = thumbContainerRef.current
+    if (!container) return
+    
+    const idx = getCenteredIndex()
+    const targetScroll = idx * (THUMB_SIZE + THUMB_GAP)
+    
+    container.scrollTo({ left: targetScroll, behavior: "smooth" })
+    
+    // Update the main image if different
+    if (idx !== lightboxIndex && visible[idx]) {
+      const dir = idx > lightboxIndex ? "left" : "right"
+      setDirection(dir)
+      setIsAnimating(true)
+      
+      setTimeout(() => {
+        setLightboxIndex(idx)
+        setLightbox(visible[idx])
+        setTimeout(() => {
+          setIsAnimating(false)
+          setDirection(null)
+        }, 50)
+      }, 100)
+    }
+  }, [getCenteredIndex, lightboxIndex, visible, THUMB_SIZE, THUMB_GAP])
+
+  // Handle scroll with debounced snap
+  const handleThumbScroll = useCallback(() => {
+    updateScrollIndicators()
+    setIsThumbScrolling(true)
+    
+    if (thumbScrollTimeout.current) {
+      clearTimeout(thumbScrollTimeout.current)
+    }
+    
+    thumbScrollTimeout.current = setTimeout(() => {
+      setIsThumbScrolling(false)
+      snapToCenter()
+    }, 150)
+  }, [updateScrollIndicators, snapToCenter])
+
+  // Scroll to specific index (used when opening lightbox)
+  const scrollToThumbIndex = useCallback((idx: number, animated = true) => {
+    const container = thumbContainerRef.current
+    if (!container) return
+    
+    const targetScroll = idx * (THUMB_SIZE + THUMB_GAP)
+    container.scrollTo({ left: targetScroll, behavior: animated ? "smooth" : "auto" })
+  }, [THUMB_SIZE, THUMB_GAP])
 
   // Main gallery vertical scroll detection
   const updateGalleryScrollIndicators = useCallback(() => {
@@ -168,43 +232,23 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     if (!container) return
     
     updateScrollIndicators()
-    container.addEventListener("scroll", updateScrollIndicators)
-    return () => container.removeEventListener("scroll", updateScrollIndicators)
-  }, [updateScrollIndicators, lightbox])
-
-  // Scroll active thumbnail into view
-  useEffect(() => {
-    if (lightbox && activeThumbRef.current && thumbContainerRef.current) {
-      const container = thumbContainerRef.current
-      const thumb = activeThumbRef.current
-      const containerRect = container.getBoundingClientRect()
-      const thumbRect = thumb.getBoundingClientRect()
-      
-      const thumbCenter = thumbRect.left + thumbRect.width / 2
-      const containerCenter = containerRect.left + containerRect.width / 2
-      const offset = thumbCenter - containerCenter
-      
-      container.scrollBy({ left: offset, behavior: "smooth" })
+    container.addEventListener("scroll", handleThumbScroll)
+    return () => {
+      container.removeEventListener("scroll", handleThumbScroll)
+      if (thumbScrollTimeout.current) {
+        clearTimeout(thumbScrollTimeout.current)
+      }
     }
-  }, [lightboxIndex, lightbox])
+  }, [updateScrollIndicators, handleThumbScroll, lightbox])
 
-  // Thumbnail drag handlers
-  const handleThumbDragStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX
-    setThumbDragStart(clientX)
-    setThumbScrollStart(thumbContainerRef.current?.scrollLeft || 0)
-  }, [])
+  // Scroll to active thumbnail when lightbox opens or index changes externally
+  useEffect(() => {
+    if (lightbox && !isThumbScrolling) {
+      scrollToThumbIndex(lightboxIndex)
+    }
+  }, [lightboxIndex, lightbox, isThumbScrolling, scrollToThumbIndex])
 
-  const handleThumbDragMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    if (thumbDragStart === null || !thumbContainerRef.current) return
-    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX
-    const delta = thumbDragStart - clientX
-    thumbContainerRef.current.scrollLeft = thumbScrollStart + delta
-  }, [thumbDragStart, thumbScrollStart])
 
-  const handleThumbDragEnd = useCallback(() => {
-    setThumbDragStart(null)
-  }, [])
 
   const col1 = visible.filter((_, i) => i % 2 === 0)
   const col2 = visible.filter((_, i) => i % 2 === 1)
@@ -430,57 +474,71 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
             <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1 h-16 bg-foreground/10 rounded-full" />
           </div>
 
-          {/* Thumbnail strip */}
+          {/* Snap-to-center thumbnail carousel */}
           <div className="relative safe-area-bottom pb-4">
+            {/* Center reticle indicator */}
+            <div className="absolute left-1/2 top-0 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center">
+              <div className="w-0.5 h-2 bg-foreground/60 rounded-full" />
+            </div>
+            
             {/* Left fade gradient */}
             <div 
-              className={`absolute left-0 top-0 bottom-4 w-12 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none transition-opacity duration-200 ${
+              className={`absolute left-0 top-0 bottom-4 w-16 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none transition-opacity duration-200 ${
                 canScrollLeft ? "opacity-100" : "opacity-0"
               }`}
             />
             {/* Right fade gradient */}
             <div 
-              className={`absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none transition-opacity duration-200 ${
+              className={`absolute right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none transition-opacity duration-200 ${
                 canScrollRight ? "opacity-100" : "opacity-0"
               }`}
             />
             
+            {/* Scroll hint text */}
+            <p className="text-center text-[9px] text-muted-foreground/60 mb-1 font-mono">
+              {isThumbScrolling ? "Release to select" : "Scroll to browse"}
+            </p>
+            
             <div
               ref={thumbContainerRef}
-              className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              onTouchStart={handleThumbDragStart}
-              onTouchMove={handleThumbDragMove}
-              onTouchEnd={handleThumbDragEnd}
-              onMouseDown={handleThumbDragStart}
-              onMouseMove={handleThumbDragMove}
-              onMouseUp={handleThumbDragEnd}
-              onMouseLeave={handleThumbDragEnd}
+              className="flex gap-2 py-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
+              style={{ 
+                scrollbarWidth: "none", 
+                msOverflowStyle: "none",
+                paddingLeft: `calc(50% - ${THUMB_SIZE / 2}px)`,
+                paddingRight: `calc(50% - ${THUMB_SIZE / 2}px)`,
+              }}
             >
-              {visible.map((photo, i) => (
-                <button
-                  key={photo.id}
-                  ref={i === lightboxIndex ? activeThumbRef : null}
-                  className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden transition-all duration-200 ${
-                    i === lightboxIndex 
-                      ? "ring-2 ring-foreground scale-105" 
-                      : "ring-1 ring-border/30 opacity-60"
-                  }`}
-                  onClick={() => {
-                    const dir = i > lightboxIndex ? "left" : "right"
-                    navigateTo(i, dir)
-                  }}
-                  aria-label={`Go to ${photo.title}`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={photo.thumb}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    draggable={false}
-                  />
-                </button>
-              ))}
+              {visible.map((photo, i) => {
+                const isActive = i === lightboxIndex
+                return (
+                  <div
+                    key={photo.id}
+                    className="flex-shrink-0 snap-center"
+                  >
+                    <div 
+                      className={`w-14 h-14 rounded-lg overflow-hidden transition-all duration-200 ${
+                        isActive 
+                          ? "ring-2 ring-foreground scale-110 shadow-lg" 
+                          : "ring-1 ring-border/30 opacity-50 scale-95"
+                      }`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={photo.thumb}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        draggable={false}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            
+            {/* Bottom reticle */}
+            <div className="absolute left-1/2 bottom-4 -translate-x-1/2 z-20 pointer-events-none">
+              <div className="w-0.5 h-2 bg-foreground/60 rounded-full" />
             </div>
           </div>
         </div>
