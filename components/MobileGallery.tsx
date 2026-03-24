@@ -18,6 +18,8 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [direction, setDirection] = useState<"left" | "right" | null>(null)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [isImageLoading, setIsImageLoading] = useState(false)
+  const [loadedImageSrc, setLoadedImageSrc] = useState<string | null>(null)
   
   // Touch/swipe state for lightbox
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null)
@@ -56,6 +58,7 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     if (isAnimating) return
     setIsAnimating(true)
     setDirection(dir)
+    setIsImageLoading(true)
     
     setTimeout(() => {
       setLightboxIndex(idx)
@@ -155,8 +158,9 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     const idx = Math.round(scrollPos / (THUMB_SIZE + THUMB_GAP))
     const clampedIdx = Math.max(0, Math.min(visible.length - 1, idx))
     
-    // Direct update - no animation, just swap
+    // Direct update - set loading state first
     if (clampedIdx !== lightboxIndex && visible[clampedIdx]) {
+      setIsImageLoading(true)
       setLightboxIndex(clampedIdx)
       setLightbox(visible[clampedIdx])
     }
@@ -424,12 +428,25 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
                       : "translateX(0)"
               }}
             >
+              {/* Loading spinner */}
+              {isImageLoading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-foreground rounded-full animate-spin" />
+                </div>
+              )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
+                key={lightbox.src}
                 src={lightbox.src}
                 alt={lightbox.title}
-                className="max-w-full max-h-full object-contain select-none rounded-lg"
+                className={`max-w-full max-h-full object-contain select-none rounded-lg transition-opacity duration-150 ${
+                  isImageLoading ? "opacity-0" : "opacity-100"
+                }`}
                 draggable={false}
+                onLoad={() => {
+                  setIsImageLoading(false)
+                  setLoadedImageSrc(lightbox.src)
+                }}
               />
             </div>
             
