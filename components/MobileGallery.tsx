@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { X, Download, Box, LayoutGrid } from "lucide-react"
 import { useGalleryStore } from "@/lib/gallery-store"
 import type { Photo } from "@/lib/photos"
+import PhotoImage from "@/components/PhotoImage"
 
 interface MobileGalleryProps {
   onDownload: (photo: Photo) => void
@@ -312,8 +313,13 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
                 onContextMenu={(e) => e.preventDefault()}
                 aria-label={`View ${photo.title}`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo.src} alt={photo.title} className="w-full h-auto object-cover" loading="lazy" />
+                <PhotoImage 
+                  src={photo.src} 
+                  alt={photo.title} 
+                  width={photo.width} 
+                  height={photo.height}
+                  className="w-full"
+                />
               </button>
             ))}
           </div>
@@ -331,8 +337,13 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
                 onContextMenu={(e) => e.preventDefault()}
                 aria-label={`View ${photo.title}`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo.src} alt={photo.title} className="w-full h-auto object-cover" loading="lazy" />
+                <PhotoImage 
+                  src={photo.src} 
+                  alt={photo.title} 
+                  width={photo.width} 
+                  height={photo.height}
+                  className="w-full"
+                />
               </button>
             ))}
           </div>

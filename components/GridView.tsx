@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { Download, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { useGalleryStore } from "@/lib/gallery-store"
 import type { Photo } from "@/lib/photos"
+import PhotoImage from "@/components/PhotoImage"
 
 interface GridViewProps {
   onDownload: (photo: Photo) => void
@@ -105,12 +106,12 @@ export default function GridView({ onDownload }: GridViewProps) {
             aria-label={`View ${photo.title}`}
             onKeyDown={(e) => e.key === "Enter" && open(photo)}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <PhotoImage
               src={photo.src}
               alt={photo.title}
-              className="w-full h-auto object-cover block"
-              loading="lazy"
+              width={photo.width}
+              height={photo.height}
+              className="w-full block"
             />
             {/* Hover overlay */}
             <div className="absolute inset-0 bg-background/0 group-hover:bg-background/40 transition-colors duration-200 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100">
