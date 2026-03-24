@@ -95,7 +95,7 @@ export default function GridView({ onDownload }: GridViewProps) {
         }`}
       />
 
-      <div className="relative z-10 columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-3 [column-fill:balance]">
+      <div className="relative z-10 columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-3" style={{ columnFill: "auto" }}>
         {visible.map((photo) => (
           <div
             key={photo.id}
