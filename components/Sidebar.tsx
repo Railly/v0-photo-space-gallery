@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useCallback } from "react"
+import { useRef, useCallback, useState, useEffect } from "react"
 import {
   Box,
   LayoutGrid,
@@ -34,6 +34,7 @@ import {
   type ViewMode,
 } from "@/lib/gallery-store"
 import { PHOTOS } from "@/lib/photos"
+import PhotoImage from "@/components/PhotoImage"
 
 function SidebarContentInner() {
   const {
@@ -53,6 +54,27 @@ function SidebarContentInner() {
   const isCollapsed = state === "collapsed"
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const photoListRef = useRef<HTMLDivElement>(null)
+  const [canScrollPhotosUp, setCanScrollPhotosUp] = useState(false)
+  const [canScrollPhotosDown, setCanScrollPhotosDown] = useState(false)
+
+  const updatePhotoListScroll = useCallback(() => {
+    const container = photoListRef.current
+    if (!container) return
+    
+    const { scrollTop, scrollHeight, clientHeight } = container
+    setCanScrollPhotosUp(scrollTop > 5)
+    setCanScrollPhotosDown(scrollTop < scrollHeight - clientHeight - 5)
+  }, [])
+
+  useEffect(() => {
+    const container = photoListRef.current
+    if (!container) return
+    
+    updatePhotoListScroll()
+    container.addEventListener("scroll", updatePhotoListScroll)
+    return () => container.removeEventListener("scroll", updatePhotoListScroll)
+  }, [updatePhotoListScroll, photos.length])
 
   const handleUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,51 +130,58 @@ function SidebarContentInner() {
   if (isCollapsed) {
     return (
       <>
-        <SidebarHeader className="p-4">
-          <div className="flex items-center justify-center">
-            <span className="text-sm font-bold text-foreground tracking-tight">PS</span>
+        <SidebarHeader className="p-3 flex items-center justify-center">
+          {/* Logo mark - stylized PS monogram */}
+          <div className="w-10 h-10 rounded-xl bg-foreground flex items-center justify-center">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-background">
+              <path d="M4 4h6a4 4 0 0 1 0 8H4V4z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 12v8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+              <path d="M14 8h6a4 4 0 0 1 0 8h-2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M14 20a4 4 0 0 1 0-8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
         </SidebarHeader>
-        <SidebarContent className="sidebar-scroll px-2">
-          <SidebarGroup className="py-3">
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={() => setView("3d")}
-                className={`p-3 rounded-lg flex items-center justify-center transition-colors ${
-                  view === "3d" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                }`}
-                title="3D Space"
-              >
-                <Box className="w-6 h-6" />
-              </button>
-              <button
-                onClick={() => setView("grid")}
-                className={`p-3 rounded-lg flex items-center justify-center transition-colors ${
-                  view === "grid" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                }`}
-                title="Grid"
-              >
-                <LayoutGrid className="w-6 h-6" />
-              </button>
-            </div>
-          </SidebarGroup>
-          <SidebarGroup className="py-3">
+        <SidebarContent className="sidebar-scroll flex flex-col items-center px-3">
+          {/* Navigation buttons - uniform squares */}
+          <div className="flex flex-col gap-2 w-full">
             <button
-              className="p-3 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors w-full"
+              onClick={() => setView("3d")}
+              className={`aspect-square w-full rounded-xl flex items-center justify-center transition-all duration-150 ${
+                view === "3d" 
+                  ? "bg-foreground text-background" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+              }`}
+              title="3D Space"
+            >
+              <Box className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setView("grid")}
+              className={`aspect-square w-full rounded-xl flex items-center justify-center transition-all duration-150 ${
+                view === "grid" 
+                  ? "bg-foreground text-background" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+              }`}
+              title="Grid"
+            >
+              <LayoutGrid className="w-5 h-5" />
+            </button>
+            <button
+              className="aspect-square w-full rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all duration-150"
               onClick={() => fileInputRef.current?.click()}
               title="Upload photos"
             >
-              <Upload className="w-6 h-6" />
+              <Upload className="w-5 h-5" />
             </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={handleUpload}
-            />
-          </SidebarGroup>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleUpload}
+          />
         </SidebarContent>
       </>
     )
@@ -226,19 +255,35 @@ function SidebarContentInner() {
               Reset to defaults
             </Button>
 
-            {/* Photo thumbnails list */}
-            <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto sidebar-scroll pr-0.5">
-              {photos.map((photo) => (
+            {/* Photo thumbnails list with scroll-aware gradients */}
+            <div className="relative">
+              {/* Top fade gradient */}
+              <div
+                aria-hidden
+                className={`pointer-events-none absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-sidebar to-transparent z-10 transition-opacity duration-200 ${
+                  canScrollPhotosUp ? "opacity-100" : "opacity-0"
+                }`}
+              />
+              {/* Bottom fade gradient */}
+              <div
+                aria-hidden
+                className={`pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-sidebar to-transparent z-10 transition-opacity duration-200 ${
+                  canScrollPhotosDown ? "opacity-100" : "opacity-0"
+                }`}
+              />
+              <div ref={photoListRef} className="flex flex-col gap-1.5 max-h-48 overflow-y-auto sidebar-scroll pr-0.5">
+                {photos.map((photo) => (
                 <div
                   key={photo.id}
                   className="group flex items-center gap-2 rounded-md p-1 hover:bg-sidebar-accent transition-colors"
                 >
                   <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0 bg-secondary">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <PhotoImage
                       src={photo.thumb}
                       alt={photo.title}
-                      className="w-full h-full object-cover"
+                      width={64}
+                      height={64}
+                      className="w-full h-full"
                     />
                   </div>
                   <span className="flex-1 text-[11px] text-foreground truncate">{photo.title}</span>
@@ -251,6 +296,7 @@ function SidebarContentInner() {
                   </button>
                 </div>
               ))}
+              </div>
             </div>
           </SidebarGroupContent>
         </SidebarGroup>

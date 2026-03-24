@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { Download, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { useGalleryStore } from "@/lib/gallery-store"
 import type { Photo } from "@/lib/photos"
+import PhotoImage from "@/components/PhotoImage"
 
 interface GridViewProps {
   onDownload: (photo: Photo) => void
@@ -15,6 +16,33 @@ export default function GridView({ onDownload }: GridViewProps) {
 
   const [lightbox, setLightbox] = useState<Photo | null>(null)
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  
+  // Scroll state for fade gradients
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollUp, setCanScrollUp] = useState(false)
+  const [canScrollDown, setCanScrollDown] = useState(true)
+
+  const updateScrollIndicators = useCallback(() => {
+    const container = scrollRef.current
+    if (!container) return
+    
+    const { scrollTop, scrollHeight, clientHeight } = container
+    setCanScrollUp(scrollTop > 10)
+    setCanScrollDown(scrollTop < scrollHeight - clientHeight - 10)
+  }, [])
+
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container) return
+    
+    updateScrollIndicators()
+    container.addEventListener("scroll", updateScrollIndicators)
+    window.addEventListener("resize", updateScrollIndicators)
+    return () => {
+      container.removeEventListener("scroll", updateScrollIndicators)
+      window.removeEventListener("resize", updateScrollIndicators)
+    }
+  }, [updateScrollIndicators])
 
   const open = useCallback(
     (photo: Photo) => {
@@ -40,7 +68,7 @@ export default function GridView({ onDownload }: GridViewProps) {
   }, [lightboxIndex, visible])
 
   return (
-    <div className="w-full h-full overflow-y-auto gallery-scroll bg-background p-6">
+    <div ref={scrollRef} className="w-full h-full overflow-y-auto gallery-scroll bg-background p-6">
       {/* Dot pattern background */}
       <div
         aria-hidden
@@ -51,8 +79,25 @@ export default function GridView({ onDownload }: GridViewProps) {
           backgroundSize: "36px 36px",
         }}
       />
+      
+      {/* Top fade gradient - visible when content scrolled down */}
+      <div
+        aria-hidden
+        className={`pointer-events-none fixed top-0 left-0 right-0 h-16 bg-gradient-to-b from-background to-transparent z-10 transition-opacity duration-200 ${
+          canScrollUp ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      {/* Bottom fade gradient - visible when more content below */}
+      <div
+        aria-hidden
+        className={`pointer-events-none fixed bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent z-10 transition-opacity duration-200 ${
+          canScrollDown ? "opacity-100" : "opacity-0"
+        }`}
+      />
 
-      <div className="relative z-10 columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-3 [column-fill:balance]">
+      <div 
+        className="relative z-10 masonry-grid"
+      >
         {visible.map((photo) => (
           <div
             key={photo.id}
@@ -63,12 +108,12 @@ export default function GridView({ onDownload }: GridViewProps) {
             aria-label={`View ${photo.title}`}
             onKeyDown={(e) => e.key === "Enter" && open(photo)}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <PhotoImage
               src={photo.src}
               alt={photo.title}
-              className="w-full h-auto object-cover block"
-              loading="lazy"
+              width={photo.width}
+              height={photo.height}
+              className="w-full block"
             />
             {/* Hover overlay */}
             <div className="absolute inset-0 bg-background/0 group-hover:bg-background/40 transition-colors duration-200 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100">

@@ -55,8 +55,31 @@ export default function PhotoSpaceClient() {
     setLastDownloaded(photo)
   }, [])
 
-  // Mobile: no sidebar, just masonry gallery
+  // Mobile: show MobileGallery for grid view, or SpaceScene for 3D
   if (isMobile) {
+    if (view === "3d") {
+      return (
+        <div className="w-full h-screen bg-background overflow-hidden relative">
+          <SpaceScene onDownload={handleDownload} />
+          {/* Mobile 3D header with back button */}
+          <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-3 bg-gradient-to-b from-background via-background/80 to-transparent">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-lg font-semibold tracking-tight text-foreground">Photo Space</h1>
+                <p className="text-[10px] text-muted-foreground font-mono">3D View</p>
+              </div>
+              <button
+                onClick={() => useGalleryStore.getState().setView("grid")}
+                className="p-2 rounded-lg bg-secondary/80 text-foreground text-xs font-medium"
+              >
+                Exit 3D
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+    
     return (
       <div className="w-full min-h-screen bg-background overflow-x-hidden">
         <MobileGallery onDownload={handleDownload} />

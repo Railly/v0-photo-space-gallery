@@ -90,16 +90,27 @@
   }
 }
 
-/* Masonry mobile layout */
+/* Masonry grid layout */
 .masonry-grid {
-  display: columns;
   column-count: 2;
   column-gap: 0.75rem;
 }
 
-@media (min-width: 480px) {
+@media (min-width: 640px) {
   .masonry-grid {
     column-count: 3;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-grid {
+    column-count: 4;
+  }
+}
+
+@media (min-width: 1280px) {
+  .masonry-grid {
+    column-count: 5;
   }
 }
 
@@ -121,4 +132,72 @@
 .gallery-scroll::-webkit-scrollbar-thumb {
   background: oklch(0.35 0 0);
   border-radius: 2px;
+}
+
+/* Hide scrollbar for thumbnail strip */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe area padding for mobile devices with notches */
+.safe-area-top {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+.safe-area-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+/* Touch-action for swipe areas */
+.touch-pan-x {
+  touch-action: pan-x;
+}
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+/* Skeleton loading shimmer animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton-shimmer {
+  animation: shimmer 1.5s infinite;
+}
+
+/* Snap scroll for carousel */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+.snap-mandatory {
+  scroll-snap-type: x mandatory;
+}
+.snap-center {
+  scroll-snap-align: center;
+}
+.snap-start {
+  scroll-snap-align: start;
+}
+
+/* 3D Loading progress animation */
+@keyframes loading-progress {
+  0% {
+    width: 10%;
+    margin-left: 0;
+  }
+  50% {
+    width: 60%;
+    margin-left: 20%;
+  }
+  100% {
+    width: 10%;
+    margin-left: 90%;
+  }
 }
