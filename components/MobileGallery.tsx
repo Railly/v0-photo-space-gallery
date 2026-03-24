@@ -155,13 +155,10 @@ export default function MobileGallery({ onDownload }: MobileGalleryProps) {
     const idx = Math.round(scrollPos / (THUMB_SIZE + THUMB_GAP))
     const clampedIdx = Math.max(0, Math.min(visible.length - 1, idx))
     
-    // Only update if different
+    // Direct update - no animation, just swap
     if (clampedIdx !== lightboxIndex && visible[clampedIdx]) {
-      const dir = clampedIdx > lightboxIndex ? "left" : "right"
-      setDirection(dir)
       setLightboxIndex(clampedIdx)
       setLightbox(visible[clampedIdx])
-      setTimeout(() => setDirection(null), 150)
     }
     
     updateScrollIndicators()
